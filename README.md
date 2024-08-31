@@ -1,2 +1,3 @@
-** Open Sauce **
-* August 31st, 2024
+# Open Sauce
+
+*August 31st, 2024*
