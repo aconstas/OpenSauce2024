@@ -2,15 +2,17 @@
 #include "photo_meter.h"
 #include "pins.h"
 
+void setRGBOutput(int r, int g, int b) {
+  digitalWrite(LED_R_PIN, r);
+  digitalWrite(LED_G_PIN, g);
+  digitalWrite(LED_B_PIN, b);
+}
+
 void setupPhotoSensor() {
-  for (int i = 2; i < 9; i++) {
-    pinMode(i, OUTPUT);
-    digitalWrite(i, HIGH);
-  }
-  pinMode(11, OUTPUT);
-  digitalWrite(11, HIGH);
-  pinMode(12, OUTPUT);
-  digitalWrite(12, HIGH);
+  pinMode(LED_R_PIN, OUTPUT);
+  pinMode(LED_G_PIN, OUTPUT);
+  pinMode(LED_B_PIN, OUTPUT);
+  setRGBOutput(1, 1, 1);
 }
 
 PhotoValues readPhotoValues() {

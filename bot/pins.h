@@ -10,4 +10,8 @@
 #define PHOTO_PIN_2 (15) // Second photo sensor
 #define PHOTO_PIN_3 (16) // Third photo sensor
 
+#define LED_R_PIN (3)
+#define LED_G_PIN (5)
+#define LED_B_PIN (6)
+
 #endif // PINS_H
