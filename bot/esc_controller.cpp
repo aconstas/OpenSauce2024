@@ -75,4 +75,8 @@ void operateESC() {
 
 void operateESCUsingTriangle(int frontSensorValue, int leftSesnsorValue, int rightSensorValue) {
   // TODO: implement after we get code from photo_meter.cpp that gives us sensor values
+
+  // It should go straight if all the values read the same
+  // It should turn left when the front detects lower first or the right detects a lower valuye
+  // It should turn right when the left is a lower value than the front and the left
 }
