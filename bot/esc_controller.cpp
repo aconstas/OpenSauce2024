@@ -72,3 +72,7 @@ void operateESC() {
   stop();       // Stop the motors
   delay(5000);  // Wait for a while befor restart
 }
+
+void operateESCUsingTriangle(int frontSensorValue, int leftSesnsorValue, int rightSensorValue) {
+  // TODO: implement after we get code from photo_meter.cpp that gives us sensor values
+}
