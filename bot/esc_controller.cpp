@@ -64,15 +64,15 @@ Speeds speedCalc(int speed, float turnSpeed) {
 // A negative turnSpeed will turn left
 void setESCSpeeds(int speed, float turnSpeed) {
   Speeds speeds = speedCalc(speed, turnSpeed);
-  // Serial.print("speed: ");
-  // Serial.print(speed);
-  // Serial.print(" turnSpeed: ");
-  // Serial.print(turnSpeed);
-  // Serial.print(" left speed: ");
-  // Serial.print(speeds.left);
-  // Serial.print(" right speed: ");
-  // Serial.print(speeds.right);
-  // Serial.print("\n");
+  Serial.print("speed: ");
+  Serial.print(speed);
+  Serial.print(" turnSpeed: ");
+  Serial.print(turnSpeed);
+  Serial.print(" left speed: ");
+  Serial.print(speeds.left);
+  Serial.print(" right speed: ");
+  Serial.print(speeds.right);
+  Serial.print("\n");
   leftMotor.speed(ESC_ARM_VALUE - speeds.left);
   rightMotor.speed(ESC_ARM_VALUE + speeds.right);
 }
@@ -91,19 +91,30 @@ void operateESC() {
 
 
 void operateESCUsingTriangle(int frontSensorValue, int leftSesnsorValue, int rightSensorValue) {
-  // a constant representing the detection of the black tape
+  // a constant representing the detection of the dark color tapeline
   int DARK_RANGE = 150;
 
-  // get the max between two sensors then get the max of those two and the third sensor. 
+  // get the max between two sensors then get the max of those two and the third sensor.
   // This is how we get our max value
   int max_sensor_value = max(max(frontSensorValue, leftSesnsorValue), rightSensorValue);
 
   // min value
   int min_sensor_value = max_sensor_value - DARK_RANGE;
 
-  // This is how we know if we are detecting the black line
+  // This is how we know if we are detecting the dark color tapeline
   bool leftIsDark = leftSesnsorValue >= min_sensor_value && leftSesnsorValue <= max_sensor_value;
-  bool rightIsDark = leftSesnsorValue >= min_sensor_value && leftSesnsorValue <= max_sensor_value;
-  bool frontIsDark = leftSesnsorValue >= min_sensor_value && leftSesnsorValue <= max_sensor_value;
+  bool rightIsDark = rightSensorValue >= min_sensor_value && rightSensorValue <= max_sensor_value;
+  bool frontIsDark = frontSensorValue >= min_sensor_value && frontSensorValue <= max_sensor_value;
 
+  // I go forward when ... (frontisDark or (frontisdark and LeftisDark and rightisDark))
+  if (frontIsDark || (frontIsDark && leftIsDark && rightIsDark)) {
+    setESCSpeeds(100, 0);  // Move forward
+  }
+  // I go right when ... right is dark, front is not dark, and left is not dark
+  else if (!leftIsDark) {
+    setESCSpeeds(100, 1.0);
+  } else if (!rightIsDark) {  // I go left when right is not detecting dark tapeline
+    // go left
+    setESCSpeeds(100, -1.0);
+  }
 }

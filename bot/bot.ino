@@ -4,10 +4,11 @@
 void setup() {
   Serial.begin(115200);
   setupESC();
+  delay(1000);
   setupPhotoSensor();
 }
 
 void loop() {
-  readPhotoValues();
-  // operateESC();
+  PhotoValues pValues = readPhotoValues();
+  operateESCUsingTriangle(pValues.left, pValues.right, pValues.front);
 }

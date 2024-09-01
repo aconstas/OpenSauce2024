@@ -13,5 +13,6 @@
 void setupESC();
 void setESCSpeeds(int speed, float turnSpeed);
 void operateESC();
+void operateESCUsingTriangle(int frontSensorValue, int leftSesnsorValue, int rightSensorValue);
 
 #endif  // ESC_CONTROLLER_H
