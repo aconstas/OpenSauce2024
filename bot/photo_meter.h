@@ -8,6 +8,7 @@ struct PhotoValues {
 };
 
 // Function prototypes
+void setRGBOutput(int r, int g, int b);
 PhotoValues readPhotoValues();
 void setupPhotoSensor();
 
