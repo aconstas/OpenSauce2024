@@ -1,25 +1,27 @@
-const int photoPin1 = A0; // First photo sensor
-const int photoPin2 = A1; // Second photo sensor
-const int photoPin3 = A2; // Third photo sensor
+#include "arduino.h"
+#include "photo_meter.h"
+#include "pins.h"
 
-void setup()
+void setupPhotoSensor()
 {
-  Serial.begin(115200); // Initialize serial communication
-
-  for (int i = 2; i < 11; i++)
+  for (int i = 2; i < 9; i++)
   {
     pinMode(i, OUTPUT);
     digitalWrite(i, HIGH);
   }
+  pinMode(11, OUTPUT);
+  digitalWrite(11, HIGH);
+  pinMode(12, OUTPUT);
+  digitalWrite(12, HIGH);
 
 }
 
-void loop()
+void readPhotoValues()
 {
   // Read values from all three sensors
-  int leftSensorValue = analogRead(photoPin1);
-  int rightSensorValue = analogRead(photoPin2);
-  int frontSensorValue = analogRead(photoPin3);
+  int leftSensorValue = analogRead(PHOTO_PIN_1);
+  int rightSensorValue = analogRead(PHOTO_PIN_2);
+  int frontSensorValue = analogRead(PHOTO_PIN_3);
 
   // Print the values to serial monitor
   Serial.print("leftSensorValue: ");
