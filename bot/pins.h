@@ -7,8 +7,8 @@
 
 
 #define PHOTO_PIN_1 (14)  // A0 - First photo sensor
-#define PHOTO_PIN_2 (16)  // A1 - Second photo sensor
-#define PHOTO_PIN_3 (15)  // A2 - Third photo sensor
+#define PHOTO_PIN_2 (16)  // A2 - Second photo sensor
+#define PHOTO_PIN_3 (15)  // A1 - Third photo sensor
 
 #define LED_R_PIN (3)
 #define LED_G_PIN (5)

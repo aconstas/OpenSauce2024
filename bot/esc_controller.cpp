@@ -1,6 +1,8 @@
 #include "esc_controller.h"
 #include "pins.h"
 
+// a constant representing the detection of the dark color tapeline
+const int DARK_RANGE = 100;
 ESC leftMotor(ESC_LEFT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);  // ESC_Name (ESC PIN, Minimum Value, Maximum Value, Default Speed, Arm Value)
 ESC rightMotor(ESC_RIGHT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);
 
@@ -29,19 +31,19 @@ struct Speeds {
   the left and right speeds will be calculated based on the speed and turnSpeed
 */
 Speeds speedCalc(int speed, int turnSpeed) {
-  if (turnSpeed == -2) {
+  if (turnSpeed == 2) {
     return {
       speed, -speed
     };
-  } else if (turnSpeed == -1) {
+  } else if (turnSpeed == 1) {
     return {
       speed, 0
     };
-  } else if (turnSpeed == 1) {
+  } else if (turnSpeed == -1) {
     return {
       0, speed
     };
-  } else if (turnSpeed == 2) {
+  } else if (turnSpeed == -2) {
     return {
       -speed, speed
     };
@@ -115,9 +117,6 @@ void operateESC() {
 
 
 void operateESCUsingTriangle(int leftSensorValue, int rightSensorValue, int frontSensorValue) {
-  // a constant representing the detection of the dark color tapeline
-  int DARK_RANGE = 90;
-
   // get the max between two sensors then get the max of those two and the third sensor.
   // This is how we get our max value
   int max_sensor_value = max(max(frontSensorValue, leftSensorValue), rightSensorValue) + 1;
@@ -149,7 +148,8 @@ void operateESCUsingTriangle(int leftSensorValue, int rightSensorValue, int fron
   //   setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, -1);
   // }
 
-  if (frontIsDark && leftIsDark && rightIsDark) {
+  // If left and right are dark, keep going. (also will trigger if all are dark.)
+  if (leftIsDark && rightIsDark) {
     setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 0);  // Move forward
   } else if (leftIsDark && frontIsDark) {
     // I go left when left and front are on the line
