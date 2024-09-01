@@ -89,10 +89,21 @@ void operateESC() {
   delay(5000);  // Wait for a while befor restart
 }
 
-void operateESCUsingTriangle(int frontSensorValue, int leftSesnsorValue, int rightSensorValue) {
-  // TODO: implement after we get code from photo_meter.cpp that gives us sensor values
 
-  // It should go straight if all the values read the same
-  // It should turn left when the front detects lower first or the right detects a lower valuye
-  // It should turn right when the left is a lower value than the front and the left
+void operateESCUsingTriangle(int frontSensorValue, int leftSesnsorValue, int rightSensorValue) {
+  // a constant representing the detection of the black tape
+  int DARK_RANGE = 150;
+
+  // get the max between two sensors then get the max of those two and the third sensor. 
+  // This is how we get our max value
+  int max_sensor_value = max(max(frontSensorValue, leftSesnsorValue), rightSensorValue);
+
+  // min value
+  int min_sensor_value = max_sensor_value - DARK_RANGE;
+
+  // This is how we know if we are detecting the black line
+  bool leftIsDark = leftSesnsorValue >= min_sensor_value && leftSesnsorValue <= max_sensor_value;
+  bool rightIsDark = leftSesnsorValue >= min_sensor_value && leftSesnsorValue <= max_sensor_value;
+  bool frontIsDark = leftSesnsorValue >= min_sensor_value && leftSesnsorValue <= max_sensor_value;
+
 }
