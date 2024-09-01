@@ -4,8 +4,6 @@
 ESC leftMotor(ESC_LEFT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);  // ESC_Name (ESC PIN, Minimum Value, Maximum Value, Default Speed, Arm Value)
 ESC rightMotor(ESC_RIGHT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);
 
-int oESC;  // Variable for the speed sent to the ESC
-
 void setupESC() {
   leftMotor.arm();
   rightMotor.arm();  // Send the Arm value so the ESC will be ready to take commands
@@ -30,12 +28,13 @@ struct Speeds {
 */
 Speeds speedCalc(int speed, float turnSpeed) {
   int offset = turnSpeed * speed;
-  int maxSpeed = speed + abs(turnSpeed * speed);
+  int absOffset = abs(offset);
+  int maxSpeed = speed + absOffset;
 
-  if (speed > maxSpeed) {
-    speed = maxSpeed;
-  } else if (speed < 0) {
-    speed = 0;
+  if (maxSpeed > 500) {
+    speed = speed - absOffset;
+  } else if (speed < ESC_MIN_OPERATIONAL_SPEED) {
+    speed = ESC_MIN_OPERATIONAL_SPEED;
   }
   if (turnSpeed > 2) {
     turnSpeed = 2;
@@ -50,6 +49,14 @@ Speeds speedCalc(int speed, float turnSpeed) {
   leftSpeed += offset;
   rightSpeed -= offset;
 
+  // It looks like values 0-ESC_MIN_OPERATIONAL_SPEED are still trying to move. but esc does not move below ESC_MIN_OPERATIONAL_SPEED. Let's make all values below ESC_MIN_OPERATIONAL_SPEED round up to ESC_MIN_OPERATIONAL_SPEED
+  if (leftSpeed < ESC_MIN_OPERATIONAL_SPEED && leftSpeed > 0) {
+    leftSpeed = ESC_MIN_OPERATIONAL_SPEED;
+  }
+  if (rightSpeed < ESC_MIN_OPERATIONAL_SPEED && rightSpeed > 0) {
+    rightSpeed = ESC_MIN_OPERATIONAL_SPEED;
+  }
+
   return { leftSpeed, rightSpeed };
 }
 
@@ -57,6 +64,15 @@ Speeds speedCalc(int speed, float turnSpeed) {
 // A negative turnSpeed will turn left
 void setESCSpeeds(int speed, float turnSpeed) {
   Speeds speeds = speedCalc(speed, turnSpeed);
+  // Serial.print("speed: ");
+  // Serial.print(speed);
+  // Serial.print(" turnSpeed: ");
+  // Serial.print(turnSpeed);
+  // Serial.print(" left speed: ");
+  // Serial.print(speeds.left);
+  // Serial.print(" right speed: ");
+  // Serial.print(speeds.right);
+  // Serial.print("\n");
   leftMotor.speed(ESC_ARM_VALUE - speeds.left);
   rightMotor.speed(ESC_ARM_VALUE + speeds.right);
 }
