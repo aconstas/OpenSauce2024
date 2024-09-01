@@ -1,19 +1,35 @@
 #include "esc_controller.h"
 #include "pins.h"
+#include "Server.h"
 
 // a constant representing the detection of the dark color tapeline
-const int DARK_RANGE = 100;
-ESC leftMotor(ESC_LEFT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);  // ESC_Name (ESC PIN, Minimum Value, Maximum Value, Default Speed, Arm Value)
-ESC rightMotor(ESC_RIGHT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);
+const int DARK_RANGE = 80;
+// ESC leftMotor(ESC_LEFT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);  // ESC_Name (ESC PIN, Minimum Value, Maximum Value, Default Speed, Arm Value)
+// ESC rightMotor(ESC_RIGHT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);
+Servo leftHBridge;
+Servo rightHBridge;
 
 void setupESC() {
-  leftMotor.arm();
-  rightMotor.arm();  // Send the Arm value so the ESC will be ready to take commands
+  //leftMotor.calib();
+  //rightMotor.calib();
+  // leftHBridge.attach(ESC_LEFT_PIN);
+  // rightHBridge.attach(ESC_RIGHT_PIN);
+  pinMode(ESC_LEFT_PIN, OUTPUT);
+  pinMode(ESC_RIGHT_PIN, OUTPUT);
+  pinMode(ESC_LEFT_REV_PIN, OUTPUT);
+  pinMode(ESC_RIGHT_REV_PIN, OUTPUT);
+
+  // leftMotor.arm();
+  // rightMotor.arm();  // Send the Arm value so the ESC will be ready to take commands
 }
 
 void stop() {
-  leftMotor.speed(ESC_ARM_VALUE);
-  rightMotor.speed(ESC_ARM_VALUE);
+  // leftMotor.speed(ESC_ARM_VALUE);
+  // rightMotor.speed(ESC_ARM_VALUE);
+  analogWrite(ESC_LEFT_PIN, 0);
+  analogWrite(ESC_RIGHT_PIN, 0);
+  leftHBridge.write(0);
+  rightHBridge.write(0);
 }
 
 struct Speeds {
@@ -31,21 +47,13 @@ struct Speeds {
   the left and right speeds will be calculated based on the speed and turnSpeed
 */
 Speeds speedCalc(int speed, int turnSpeed) {
-  if (turnSpeed == 2) {
-    return {
-      speed, -speed
-    };
-  } else if (turnSpeed == 1) {
+  if (turnSpeed == 1) {
     return {
       speed, 0
     };
   } else if (turnSpeed == -1) {
     return {
       0, speed
-    };
-  } else if (turnSpeed == -2) {
-    return {
-      -speed, speed
     };
   } else {
     return {
@@ -90,17 +98,33 @@ Speeds speedCalc(int speed, int turnSpeed) {
 // A negative turnSpeed will turn left
 void setESCSpeeds(int speed, int turnSpeed) {
   Speeds speeds = speedCalc(speed, turnSpeed);
-  Serial.print("speed: ");
-  Serial.print(speed);
-  Serial.print(" turnSpeed: ");
-  Serial.print(turnSpeed);
-  Serial.print(" left speed: ");
-  Serial.print(speeds.left);
-  Serial.print(" right speed: ");
-  Serial.print(speeds.right);
-  Serial.print("\n");
-  leftMotor.speed(ESC_ARM_VALUE - speeds.left);
-  rightMotor.speed(ESC_ARM_VALUE + speeds.right);
+  // Serial.print("speed: ");
+  // Serial.print(speed);
+  // Serial.print(" turnSpeed: ");
+  // Serial.print(turnSpeed);
+  // Serial.print(" left speed: ");
+  // Serial.print(speeds.left);
+  // Serial.print(" right speed: ");
+  // Serial.print(speeds.right);
+  // Serial.print("\n");
+  analogWrite(ESC_LEFT_PIN, speeds.left);
+  analogWrite(ESC_RIGHT_PIN, speeds.right);
+
+  // leftHBridge.write(speeds.left);
+  // rightHBridge.write(speeds.right);
+  if (speeds.left == 0) { // this means reverse
+    analogWrite(ESC_LEFT_PIN, 220);
+    digitalWrite(ESC_LEFT_REV_PIN, 1);
+  } else {
+    digitalWrite(ESC_LEFT_REV_PIN, 0);
+  }
+
+  if (speeds.right == 0) { // this means reverse
+    analogWrite(ESC_RIGHT_PIN, 220);
+    digitalWrite(ESC_RIGHT_REV_PIN, 1);
+  } else {
+    digitalWrite(ESC_RIGHT_REV_PIN, 0);
+  }
 }
 
 void operateESC() {
@@ -115,7 +139,7 @@ void operateESC() {
   delay(5000);  // Wait for a while befor restart
 }
 
-
+int prevDirection = 0;
 void operateESCUsingTriangle(int leftSensorValue, int rightSensorValue, int frontSensorValue) {
   // get the max between two sensors then get the max of those two and the third sensor.
   // This is how we get our max value
@@ -129,41 +153,52 @@ void operateESCUsingTriangle(int leftSensorValue, int rightSensorValue, int fron
   bool rightIsDark = (rightSensorValue >= min_sensor_value) && (rightSensorValue <= max_sensor_value);
   bool frontIsDark = (frontSensorValue >= min_sensor_value) && (frontSensorValue <= max_sensor_value);
 
-  Serial.write("LD: ");
-  Serial.write(leftIsDark ? "true" : "false");
-  Serial.write(" RD: ");
-  Serial.write(rightIsDark ? "true" : "false");
-  Serial.write(" FD: ");
-  Serial.write(frontIsDark ? "true" : "false");
-  Serial.write("\n");
+  // Serial.write("LD: ");
+  // Serial.write(leftIsDark ? "true" : "false");
+  // Serial.write(" RD: ");
+  // Serial.write(rightIsDark ? "true" : "false");
+  // Serial.write(" FD: ");
+  // Serial.write(frontIsDark ? "true" : "false");
+  // Serial.write("\n");
 
   // // I go forward when ... (frontisDark or (frontisdark and LeftisDark and rightisDark))
-  // if (frontIsDark || (frontIsDark && leftIsDark && rightIsDark)) {
-  //   setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 0);  // Move forward
-  // } else if (!leftIsDark) {
-  //   // I go right when ... right is dark, front is not dark, and left is not dark
-  //   setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 1);
-  // } else if (!rightIsDark) {  // I go left when right is not detecting dark tapeline
-  //   // go left
-  //   setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, -1);
-  // }
-
-  // If left and right are dark, keep going. (also will trigger if all are dark.)
-  if (leftIsDark && rightIsDark) {
-    setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 0);  // Move forward
-  } else if (leftIsDark && frontIsDark) {
-    // I go left when left and front are on the line
-    setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, -1);
-  } else if (leftIsDark) {
-    // I go left faster when left is on the line
-    setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, -2);
-  } else if (rightIsDark && frontIsDark) {
-    // I go right when right and front are on the line
-    setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 1);
-  } else if (rightIsDark) {
-    // I go right faster when left is on the line
-    setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 2);
-  } else {
-    setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 0);  // Move forward
+  if (frontIsDark) {
+    // if (frontIsDark && leftIsDark && rightIsDark) {
+    //   if (prevDirection == -1) {
+    //     setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, -1);
+    //   } else if (prevDirection == 1) {
+    //     setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 1);
+    //   }
+    // } else {
+    setESCSpeeds(30, 0);  // Move forward
+    prevDirection = 0;
+    // }
+  } else if (!leftIsDark) {
+    // I go right when ... right is dark, front is not dark, and left is not dark
+    setESCSpeeds(40, 1);
+    prevDirection = 1;
+  } else if (!rightIsDark) {  // I go left when right is not detecting dark tapeline
+    // go left
+    setESCSpeeds(40, -1);
+    prevDirection = -1;
   }
+
+  // // If left and right are dark, keep going. (also will trigger if all are dark.)
+  // if (leftIsDark && rightIsDark) {
+  //   setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 0);  // Move forward
+  // } else if (leftIsDark && frontIsDark) {
+  //   // I go left when left and front are on the line
+  //   setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, -1);
+  // } else if (leftIsDark) {
+  //   // I go left faster when left is on the line
+  //   setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, -2);
+  // } else if (rightIsDark && frontIsDark) {
+  //   // I go right when right and front are on the line
+  //   setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 1);
+  // } else if (rightIsDark) {
+  //   // I go right faster when left is on the line
+  //   setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 2);
+  // } else {
+  //   setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 0);  // Move forward
+  // }
 }
