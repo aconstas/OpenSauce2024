@@ -17,18 +17,19 @@ void loop() {
   // Serial.println("Start loop");
   PhotoValues pValues = readPhotoValues();
   if (color == 0) {
-    setRGBOutput(1, 1, 1);
-  // // } else if (color == 1) {
-  // //   setRGBOutput(1, 0, 0);
-  } else if (color == 2) {
+    // setRGBOutput(1, 1, 1);
+  // } else if (color == 1) {
+  //   setRGBOutput(1, 0, 0);
+  } else if (color == 1) {
     setRGBOutput(0, 1, 0);
   // } else if (color == 3) {
   //   setRGBOutput(0, 0, 1);
   }
   color++;
-  if (color > 4) {
+  if (color > 1) {
     color = 0;
   }
-  delay(10); // delay after color change to let sensors read
+  delay(30); // delay after color change to let sensors read
   operateESCUsingTriangle(pValues.left, pValues.right, pValues.front);
+  // delay(100); // delay after color change to let sensors read
 }

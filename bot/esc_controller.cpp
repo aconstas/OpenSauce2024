@@ -3,7 +3,7 @@
 #include "Server.h"
 
 // a constant representing the detection of the dark color tapeline
-const int DARK_RANGE = 80;
+const int DARK_RANGE = 30;
 // ESC leftMotor(ESC_LEFT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);  // ESC_Name (ESC PIN, Minimum Value, Maximum Value, Default Speed, Arm Value)
 // ESC rightMotor(ESC_RIGHT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);
 Servo leftHBridge;
@@ -23,13 +23,12 @@ void setupESC() {
   // rightMotor.arm();  // Send the Arm value so the ESC will be ready to take commands
 }
 
-void stop() {
-  // leftMotor.speed(ESC_ARM_VALUE);
-  // rightMotor.speed(ESC_ARM_VALUE);
+void stop(int delayAmount) {
+  delay(delayAmount);
   analogWrite(ESC_LEFT_PIN, 0);
   analogWrite(ESC_RIGHT_PIN, 0);
-  leftHBridge.write(0);
-  rightHBridge.write(0);
+  digitalWrite(ESC_LEFT_REV_PIN, 0);
+  digitalWrite(ESC_RIGHT_REV_PIN, 0);
 }
 
 struct Speeds {
@@ -107,21 +106,31 @@ void setESCSpeeds(int speed, int turnSpeed) {
   // Serial.print(" right speed: ");
   // Serial.print(speeds.right);
   // Serial.print("\n");
+  // if (speeds.left > 0 && speeds.right > 0) {
+  //   analogWrite(ESC_LEFT_PIN, 200);
+  //   analogWrite(ESC_RIGHT_PIN, 200);
+  //   delay(5);
+  // }
   analogWrite(ESC_LEFT_PIN, speeds.left);
   analogWrite(ESC_RIGHT_PIN, speeds.right);
+  // stop(40);
 
   // leftHBridge.write(speeds.left);
   // rightHBridge.write(speeds.right);
-  if (speeds.left == 0) { // this means reverse
-    analogWrite(ESC_LEFT_PIN, 220);
+  if (speeds.left == 0) {  // this means reverse
+    analogWrite(ESC_RIGHT_PIN, 0);
+    analogWrite(ESC_LEFT_PIN, 160);
     digitalWrite(ESC_LEFT_REV_PIN, 1);
+    stop(100);
   } else {
     digitalWrite(ESC_LEFT_REV_PIN, 0);
   }
 
-  if (speeds.right == 0) { // this means reverse
-    analogWrite(ESC_RIGHT_PIN, 220);
+  if (speeds.right == 0) {  // this means reverse
+    analogWrite(ESC_LEFT_PIN, 0);
+    analogWrite(ESC_RIGHT_PIN, 160);
     digitalWrite(ESC_RIGHT_REV_PIN, 1);
+    stop(100);
   } else {
     digitalWrite(ESC_RIGHT_REV_PIN, 0);
   }
@@ -135,7 +144,6 @@ void operateESC() {
   setESCSpeeds(100, -1);  // Turn left
   delay(1000);            // for 1 second
 
-  stop();       // Stop the motors
   delay(5000);  // Wait for a while befor restart
 }
 
@@ -175,11 +183,11 @@ void operateESCUsingTriangle(int leftSensorValue, int rightSensorValue, int fron
     // }
   } else if (!leftIsDark) {
     // I go right when ... right is dark, front is not dark, and left is not dark
-    setESCSpeeds(40, 1);
+    setESCSpeeds(30, 1);
     prevDirection = 1;
   } else if (!rightIsDark) {  // I go left when right is not detecting dark tapeline
     // go left
-    setESCSpeeds(40, -1);
+    setESCSpeeds(30, -1);
     prevDirection = -1;
   }
 
