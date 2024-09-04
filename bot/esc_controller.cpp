@@ -1,9 +1,11 @@
 #include "esc_controller.h"
 #include "pins.h"
 #include "Server.h"
+#include "photo_meter.h"
 
+int forwardSpeed = 30;
 // a constant representing the detection of the dark color tapeline
-const int DARK_RANGE = 30;
+const int DARK_RANGE = 20;
 // ESC leftMotor(ESC_LEFT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);  // ESC_Name (ESC PIN, Minimum Value, Maximum Value, Default Speed, Arm Value)
 // ESC rightMotor(ESC_RIGHT_PIN, ESC_SPEED_MIN, ESC_SPEED_MAX, ESC_ARM_VALUE);
 Servo leftHBridge;
@@ -23,8 +25,14 @@ void setupESC() {
   // rightMotor.arm();  // Send the Arm value so the ESC will be ready to take commands
 }
 
-void stop(int delayAmount) {
-  delay(delayAmount);
+void stopUntilFrontIsDarkOrTimeout(int delayAmount) {
+  for (int i = 0; i < delayAmount; i++) {
+    delay(delayAmount);
+    PhotoValues pValues = readPhotoValues();
+    if (pValues.front) {
+      break;
+    }
+  }
   analogWrite(ESC_LEFT_PIN, 0);
   analogWrite(ESC_RIGHT_PIN, 0);
   digitalWrite(ESC_LEFT_REV_PIN, 0);
@@ -112,25 +120,28 @@ void setESCSpeeds(int speed, int turnSpeed) {
   //   delay(5);
   // }
   analogWrite(ESC_LEFT_PIN, speeds.left);
-  analogWrite(ESC_RIGHT_PIN, speeds.right);
-  // stop(40);
+  if (speeds.left == speeds.right) {
+    analogWrite(ESC_RIGHT_PIN, speeds.right);
+  } else {
+    analogWrite(ESC_RIGHT_PIN, speeds.right);
+  }
 
   // leftHBridge.write(speeds.left);
   // rightHBridge.write(speeds.right);
   if (speeds.left == 0) {  // this means reverse
     analogWrite(ESC_RIGHT_PIN, 0);
-    analogWrite(ESC_LEFT_PIN, 160);
+    analogWrite(ESC_LEFT_PIN, 180);
     digitalWrite(ESC_LEFT_REV_PIN, 1);
-    stop(100);
+    stopUntilFrontIsDarkOrTimeout(40);
   } else {
     digitalWrite(ESC_LEFT_REV_PIN, 0);
   }
 
   if (speeds.right == 0) {  // this means reverse
     analogWrite(ESC_LEFT_PIN, 0);
-    analogWrite(ESC_RIGHT_PIN, 160);
+    analogWrite(ESC_RIGHT_PIN, 180);
     digitalWrite(ESC_RIGHT_REV_PIN, 1);
-    stop(100);
+    stopUntilFrontIsDarkOrTimeout(40);
   } else {
     digitalWrite(ESC_RIGHT_REV_PIN, 0);
   }
@@ -148,6 +159,7 @@ void operateESC() {
 }
 
 int prevDirection = 0;
+int iterationsInSameDirection = 0;
 void operateESCUsingTriangle(int leftSensorValue, int rightSensorValue, int frontSensorValue) {
   // get the max between two sensors then get the max of those two and the third sensor.
   // This is how we get our max value
@@ -170,13 +182,21 @@ void operateESCUsingTriangle(int leftSensorValue, int rightSensorValue, int fron
   // Serial.write("\n");
 
   // // I go forward when ... (frontisDark or (frontisdark and LeftisDark and rightisDark))
-  if (frontIsDark) {
+  if (frontIsDark || (leftIsDark && rightIsDark)) {
     // if (frontIsDark && leftIsDark && rightIsDark) {
     //   if (prevDirection == -1) {
     //     setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, -1);
     //   } else if (prevDirection == 1) {
     //     setESCSpeeds(ESC_MIN_OPERATIONAL_SPEED, 1);
     //   }
+    // } else {
+    if (prevDirection == 0) {
+      iterationsInSameDirection++;
+    }
+    // if (iterationsInSameDirection > 30) {
+    // setESCSpeeds(1, 0);  // Move forward
+    // delay(30);
+    // iterationsInSameDirection = 0;
     // } else {
     setESCSpeeds(30, 0);  // Move forward
     prevDirection = 0;
@@ -185,10 +205,12 @@ void operateESCUsingTriangle(int leftSensorValue, int rightSensorValue, int fron
     // I go right when ... right is dark, front is not dark, and left is not dark
     setESCSpeeds(30, 1);
     prevDirection = 1;
+    iterationsInSameDirection = 0;
   } else if (!rightIsDark) {  // I go left when right is not detecting dark tapeline
     // go left
     setESCSpeeds(30, -1);
     prevDirection = -1;
+    iterationsInSameDirection = 0;
   }
 
   // // If left and right are dark, keep going. (also will trigger if all are dark.)

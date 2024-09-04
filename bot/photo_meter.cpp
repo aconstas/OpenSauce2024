@@ -17,9 +17,9 @@ void setupPhotoSensor() {
 
 PhotoValues readPhotoValues() {
   // Read values from all three sensors
-  int leftSensorValue = analogRead(PHOTO_PIN_1) - 30;
+  int leftSensorValue = analogRead(PHOTO_PIN_1) + 20;
   int rightSensorValue = analogRead(PHOTO_PIN_2);
-  int frontSensorValue = analogRead(PHOTO_PIN_3);
+  int frontSensorValue = analogRead(PHOTO_PIN_3) + 10;
 
   // Print the values to serial monitor
   // Serial.print("leftSensorValue: ");
